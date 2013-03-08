@@ -1,5 +1,5 @@
-import pyll
-from pyll import scope
+from . import pyll
+from .pyll import scope
 
 
 @scope.define
@@ -14,7 +14,7 @@ def hyperopt_param(label, obj):
 
 
 def hp_choice(label, options):
-    if not isinstance(label, basestring):
+    if not isinstance(label, str):
         raise TypeError('require string label')
     ch = scope.hyperopt_param(label,
         scope.randint(len(options)))
@@ -22,14 +22,14 @@ def hp_choice(label, options):
 
 
 def hp_randint(label, *args, **kwargs):
-    if not isinstance(label, basestring):
+    if not isinstance(label, str):
         raise TypeError('require string label')
     return scope.hyperopt_param(label,
         scope.randint(*args, **kwargs))
 
 
 def hp_uniform(label, *args, **kwargs):
-    if not isinstance(label, basestring):
+    if not isinstance(label, str):
         raise TypeError('require string label')
     return scope.float(
             scope.hyperopt_param(label,
@@ -37,7 +37,7 @@ def hp_uniform(label, *args, **kwargs):
 
 
 def hp_quniform(label, *args, **kwargs):
-    if not isinstance(label, basestring):
+    if not isinstance(label, str):
         raise TypeError('require string label')
     return scope.float(
             scope.hyperopt_param(label,
@@ -45,7 +45,7 @@ def hp_quniform(label, *args, **kwargs):
 
 
 def hp_loguniform(label, *args, **kwargs):
-    if not isinstance(label, basestring):
+    if not isinstance(label, str):
         raise TypeError('require string label')
     return scope.float(
             scope.hyperopt_param(label,
@@ -53,7 +53,7 @@ def hp_loguniform(label, *args, **kwargs):
 
 
 def hp_qloguniform(label, *args, **kwargs):
-    if not isinstance(label, basestring):
+    if not isinstance(label, str):
         raise TypeError('require string label')
     return scope.float(
             scope.hyperopt_param(label,
@@ -61,7 +61,7 @@ def hp_qloguniform(label, *args, **kwargs):
 
 
 def hp_normal(label, *args, **kwargs):
-    if not isinstance(label, basestring):
+    if not isinstance(label, str):
         raise TypeError('require string label')
     return scope.float(
             scope.hyperopt_param(label,
@@ -69,7 +69,7 @@ def hp_normal(label, *args, **kwargs):
 
 
 def hp_qnormal(label, *args, **kwargs):
-    if not isinstance(label, basestring):
+    if not isinstance(label, str):
         raise TypeError('require string label')
     return scope.float(
             scope.hyperopt_param(label,
@@ -77,7 +77,7 @@ def hp_qnormal(label, *args, **kwargs):
 
 
 def hp_lognormal(label, *args, **kwargs):
-    if not isinstance(label, basestring):
+    if not isinstance(label, str):
         raise TypeError('require string label')
     return scope.float(
             scope.hyperopt_param(label,
@@ -85,7 +85,7 @@ def hp_lognormal(label, *args, **kwargs):
 
 
 def hp_qlognormal(label, *args, **kwargs):
-    if not isinstance(label, basestring):
+    if not isinstance(label, str):
         raise TypeError('require string label')
     return scope.float(
             scope.hyperopt_param(label,

@@ -1,12 +1,12 @@
 import sys
 import numpy as np
 import logging
-import cPickle
+import pickle
 logger = logging.getLogger(__name__)
 
 import numpy
 
-import pyll
+from . import pyll
 
 def import_tokens(tokens):
     # XXX Document me
@@ -17,9 +17,9 @@ def import_tokens(tokens):
         # XXX: try using getattr, and then merge with load_tokens
         try:
             logger.info('importing %s' % modname)
-            exec "import %s" % modname
-            exec "rval = %s" % modname
-        except ImportError, e:
+            exec("import %s" % modname)
+            exec("rval = %s" % modname)
+        except ImportError as e:
             logger.info('failed to import %s' % modname)
             logger.info('reason: %s' % str(e))
             break
@@ -53,7 +53,7 @@ def json_call(json, args=(), kwargs=None):
     """
     if kwargs is None:
         kwargs = {}
-    if isinstance(json, basestring):
+    if isinstance(json, str):
         symbol = json_lookup(json)
         return symbol(*args, **kwargs)
     elif isinstance(json, dict):
@@ -73,7 +73,7 @@ def get_obj(f, argfile=None, argstr=None, args=(), kwargs=None):
     if argfile is not None:
         argstr = open(argfile).read()
     if argstr is not None:
-        argd = cPickle.loads(argstr)
+        argd = pickle.loads(argstr)
     else:
         argd = {}
     args = args + argd.get('args',())

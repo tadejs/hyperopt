@@ -73,9 +73,9 @@ def test_adaptive_parzen_normal_orig():
     weights2, mus2, sigmas2 = adaptive_parzen_normal_orig(
             mus, 3.3, prior_mu, prior_sigma)
 
-    print weights2
-    print mus2
-    print sigmas2
+    print(weights2)
+    print(mus2)
+    print(sigmas2)
 
     assert len(weights2) == len(mus2) == len(sigmas2) == 11
     assert np.all(weights2[0] > weights2[1:])
@@ -99,7 +99,7 @@ class TestGMM1(unittest.TestCase):
     def test_mus_make_variance(self):
         samples = GMM1([.5, .5], [0.0, 1.0], [0.000001, 0.000001],
                 rng=self.rng, size=[1000])
-        print samples.shape
+        print(samples.shape)
         #import matplotlib.pyplot as plt
         #plt.hist(samples)
         #plt.show()
@@ -184,7 +184,7 @@ class TestGMM1(unittest.TestCase):
                 [0.0, 1.0, 2.0],   # mu
                 [1.0, 2.0, 5.0],   # sigma
                 )
-        print llval
+        print(llval)
         assert llval.shape == (3, 3)
 
         a = (.25 / np.sqrt(2 * np.pi * 1.0 ** 2)
@@ -257,9 +257,9 @@ class TestGMM1Math(unittest.TestCase):
             plt.plot(edges[:-1], pdf)
             plt.show()
         err = (pdf - y) ** 2
-        print np.max(err)
-        print np.mean(err)
-        print np.median(err)
+        print(np.max(err))
+        print(np.mean(err))
+        print(np.median(err))
         if not self.show:
             assert np.max(err) < .1
             assert np.mean(err) < .01
@@ -305,12 +305,12 @@ class TestQGMM1Math(unittest.TestCase):
         samples = GMM1(rng=self.rng,
                 size=(self.n_samples,),
                 **gkwargs) / self.q
-        print 'drew', len(samples), 'samples'
+        print('drew', len(samples), 'samples')
         assert np.all(samples == samples.astype('int'))
         min_max = int(samples.min()), int(samples.max())
         counts = np.bincount(samples.astype('int') - min_max[0])
 
-        print counts
+        print(counts)
         xcoords = np.arange(min_max[0], min_max[1] + 1) * self.q
         prob = np.exp(GMM1_lpdf(xcoords, **gkwargs))
         assert counts.sum() == self.n_samples
@@ -323,9 +323,9 @@ class TestQGMM1Math(unittest.TestCase):
             plt.title(str(self.show))
             plt.show()
         err = (prob - y) ** 2
-        print np.max(err)
-        print np.mean(err)
-        print np.median(err)
+        print(np.max(err))
+        print(np.mean(err))
+        print(np.median(err))
         if self.show:
             raise nose.SkipTest()
         else:
@@ -418,7 +418,7 @@ class TestLGMM1Math(unittest.TestCase):
         samples = np.sort(samples)
         edges = samples[::self.samples_per_bin]
         centers = .5 * edges[:-1] + .5 * edges[1:]
-        print edges
+        print(edges)
 
         pdf = np.exp(LGMM1_lpdf(centers, **self.LGMM1_kwargs))
         dx = edges[1:] - edges[:-1]
@@ -429,9 +429,9 @@ class TestLGMM1Math(unittest.TestCase):
             plt.plot(centers, pdf)
             plt.show()
         err = (pdf - y) ** 2
-        print np.max(err)
-        print np.mean(err)
-        print np.median(err)
+        print(np.max(err))
+        print(np.mean(err))
+        print(np.median(err))
         if not self.show:
             assert np.max(err) < .1
             assert np.mean(err) < .01
@@ -482,15 +482,15 @@ class TestQLGMM1Math(unittest.TestCase):
         # -- we've divided the LGMM1 by self.q to get ints here
         assert np.all(samples == samples.astype('int'))
         min_max = int(samples.min()), int(samples.max())
-        print 'SAMPLES RANGE', min_max
+        print('SAMPLES RANGE', min_max)
         counts = np.bincount(samples.astype('int') - min_max[0])
 
         #print samples
         #print counts
         xcoords = np.arange(min_max[0], min_max[1] + 0.5) * self.q
         prob = np.exp(LGMM1_lpdf(xcoords, **self.kwargs))
-        print xcoords
-        print prob
+        print(xcoords)
+        print(prob)
         assert counts.sum() == self.n_samples
         y = counts / float(self.n_samples)
 
@@ -502,9 +502,9 @@ class TestQLGMM1Math(unittest.TestCase):
         # -- calculate errors on the low end, don't take a mean
         #    over all the range spanned by a few outliers.
         err = ((prob - y) ** 2)[:20]
-        print np.max(err)
-        print np.mean(err)
-        print np.median(err)
+        print(np.max(err))
+        print(np.mean(err))
+        print(np.median(err))
         if self.show:
             raise nose.SkipTest()
         else:
@@ -608,7 +608,7 @@ if 0:
             #print pyll.as_apply(tpe_algo.post_vals)
             argmemo = {}
 
-            print trials.miscs
+            print(trials.miscs)
             idxs, vals = miscs_to_idxs_vals(trials.miscs)
             argmemo[tpe_algo.observed['idxs']] = idxs
             argmemo[tpe_algo.observed['vals']] = vals
@@ -617,7 +617,7 @@ if 0:
             stuff = pyll.rec_eval([tpe_algo.post_below['idxs'],
                         tpe_algo.post_below['vals']],
                         memo=argmemo)
-            print stuff
+            print(stuff)
 
 
 class TestSuggest(unittest.TestCase, CasePerBandit):
@@ -680,7 +680,7 @@ class TestOpt(unittest.TestCase, CasePerBandit):
 
         bandit = self.bandit
         assert bandit.name is not None
-        print 'Bandit', bandit.name
+        print('Bandit', bandit.name)
         algo = TreeParzenEstimator(bandit,
                 gamma=self.gammas.get(bandit.name,
                     TreeParzenEstimator.gamma),
@@ -701,28 +701,28 @@ class TestOpt(unittest.TestCase, CasePerBandit):
             rtrials = Trials()
             exp = Experiment(rtrials, Random(bandit))
             exp.run(LEN)
-            print 'RANDOM MINS', list(sorted(rtrials.losses()))[:6]
+            print('RANDOM MINS', list(sorted(rtrials.losses()))[:6])
             #logx = np.log([s['x'] for s in rtrials.specs])
             #print 'RND MEAN', np.mean(logx)
             #print 'RND STD ', np.std(logx)
 
-        print algo.n_EI_candidates
-        print algo.gamma
-        print algo.prior_weight
+        print(algo.n_EI_candidates)
+        print(algo.gamma)
+        print(algo.prior_weight)
 
         if 0:
             plt.subplot(2, 2, 1)
-            plt.scatter(range(LEN), trials.losses())
+            plt.scatter(list(range(LEN)), trials.losses())
             plt.title('TPE losses')
             plt.subplot(2, 2, 2)
-            plt.scatter(range(LEN), ([s['x'] for s in trials.specs]))
+            plt.scatter(list(range(LEN)), ([s['x'] for s in trials.specs]))
             plt.title('TPE x')
             plt.subplot(2, 2, 3)
             plt.title('RND losses')
-            plt.scatter(range(LEN), rtrials.losses())
+            plt.scatter(list(range(LEN)), rtrials.losses())
             plt.subplot(2, 2, 4)
             plt.title('RND x')
-            plt.scatter(range(LEN), ([s['x'] for s in rtrials.specs]))
+            plt.scatter(list(range(LEN)), ([s['x'] for s in rtrials.specs]))
             plt.show()
         if 0:
             plt.hist(
@@ -730,12 +730,12 @@ class TestOpt(unittest.TestCase, CasePerBandit):
                     bins=20)
 
         #print trials.losses()
-        print 'TPE    MINS', list(sorted(trials.losses()))[:6]
+        print('TPE    MINS', list(sorted(trials.losses()))[:6])
         #logx = np.log([s['x'] for s in trials.specs])
         #print 'TPE MEAN', np.mean(logx)
         #print 'TPE STD ', np.std(logx)
         thresh = self.thresholds[bandit.name]
-        print 'Thresh', thresh
+        print('Thresh', thresh)
         assert min(trials.losses()) < thresh
 
 
@@ -756,7 +756,7 @@ def notest_opt_qn_normal(f=hp_normal):
     experiment = Experiment(trials, algo, async=False)
     experiment.max_queue_len = 1
     experiment.run(40)
-    print 'sorted losses:', list(sorted(trials.losses()))
+    print('sorted losses:', list(sorted(trials.losses())))
 
     idxs, vals = miscs_to_idxs_vals(trials.miscs)
 
@@ -765,8 +765,8 @@ def notest_opt_qn_normal(f=hp_normal):
         hyperopt.plotting.main_plot_vars(trials, bandit, do_show=1)
     else:
         import matplotlib.pyplot as plt
-        begin = [v[:10] for k, v in vals.items()]
-        end = [v[-10:] for k, v in vals.items()]
+        begin = [v[:10] for k, v in list(vals.items())]
+        end = [v[-10:] for k, v in list(vals.items())]
         plt.subplot(2, 1, 1)
         plt.title('before')
         plt.hist(np.asarray(begin).flatten())
@@ -796,8 +796,8 @@ class TestOptQUniform():
                 n_startup_jobs=2,
                 n_EI_candidates=128,
                 gamma=gamma)
-        print algo.opt_idxs['x']
-        print algo.opt_vals['x']
+        print(algo.opt_idxs['x'])
+        print(algo.opt_vals['x'])
 
         trials = Trials()
         experiment = Experiment(trials, algo)
@@ -809,7 +809,7 @@ class TestOptQUniform():
         idxs, vals = miscs_to_idxs_vals(trials.miscs)
         idxs = idxs['x']
         vals = vals['x']
-        print "VALS", vals
+        print("VALS", vals)
 
         losses = trials.losses()
 
@@ -829,7 +829,7 @@ class TestOptQUniform():
         #print b_post
         #print a_post
         fn_lpdf = getattr(scope, a_post.name + '_lpdf')
-        print fn_lpdf
+        print(fn_lpdf)
         # calculate the llik of b_post under both distributions
         a_kwargs = dict([(n, a) for n, a in a_post.named_args
                     if n not in ('rng', 'size')])
@@ -839,34 +839,34 @@ class TestOptQUniform():
         above_llik = fn_lpdf(*([b_post] + a_post.pos_args), **a_kwargs)
         new_node = scope.broadcast_best(b_post, below_llik, above_llik)
 
-        print '=' * 80
+        print('=' * 80)
 
         do_show = self.show_steps
 
         for ii in range(2, 9):
             if ii > len(idxs):
                 break
-            print '-' * 80
-            print 'ROUND', ii
-            print '-' * 80
+            print('-' * 80)
+            print('ROUND', ii)
+            print('-' * 80)
             all_vals = [2, 3, 4, 5, 6, 7, 8, 9, 10]
             below, above = ap_filter_trials(idxs[:ii],
                     vals[:ii], idxs[:ii], losses[:ii], gamma)
             below = below.astype('int')
             above = above.astype('int')
-            print 'BB0', below
-            print 'BB1', above
+            print('BB0', below)
+            print('BB1', above)
             #print 'BELOW',  zip(range(100), np.bincount(below, minlength=11))
             #print 'ABOVE',  zip(range(100), np.bincount(above, minlength=11))
             memo = {b_post: all_vals, s_below: below, s_above: above}
             bl, al, nv = pyll.rec_eval([below_llik, above_llik, new_node],
                     memo=memo)
             #print bl - al
-            print 'BB2', dict(zip(all_vals, bl - al))
-            print 'BB3', dict(zip(all_vals, bl))
-            print 'BB4', dict(zip(all_vals, al))
-            print 'ORIG PICKED', vals[ii]
-            print 'PROPER OPT PICKS:', nv
+            print('BB2', dict(list(zip(all_vals, bl - al))))
+            print('BB3', dict(list(zip(all_vals, bl))))
+            print('BB4', dict(list(zip(all_vals, al))))
+            print('ORIG PICKED', vals[ii])
+            print('PROPER OPT PICKS:', nv)
 
             #assert np.allclose(below, [3, 3, 9])
             #assert len(below) + len(above) == len(vals)

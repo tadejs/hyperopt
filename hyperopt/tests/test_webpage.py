@@ -23,8 +23,8 @@ def test_landing_screen():
         algo=hyperopt.tpe.suggest,
         max_evals=100)
 
-    print best
+    print(best)
     # -> {'a': 1, 'c2': 0.01420615366247227}
 
-    print hyperopt.space_eval(space, best)
+    print(hyperopt.space_eval(space, best))
     # -> ('case 2', 0.01420615366247227}

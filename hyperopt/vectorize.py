@@ -2,19 +2,19 @@ import sys
 
 import numpy as np
 
-from pyll import Apply
-from pyll import as_apply
-from pyll import dfs
-from pyll import toposort
-from pyll import scope
-from pyll import stochastic
-from pyll import clone_merge
+from .pyll import Apply
+from .pyll import as_apply
+from .pyll import dfs
+from .pyll import toposort
+from .pyll import scope
+from .pyll import stochastic
+from .pyll import clone_merge
 
 stoch = stochastic.implicit_stochastic_symbols
 
 
 def ERR(msg):
-    print >> sys.stderr, 'hyperopt.vectorize.ERR', msg
+    print('hyperopt.vectorize.ERR', msg, file=sys.stderr)
 
 
 @scope.define_pure
@@ -53,20 +53,20 @@ def idxs_map(idxs, cmd, *args, **kwargs):
     if 0: # these should all be true, but evaluating them is slow
         for ii, (idxs_ii, vals_ii) in enumerate(args):
             for jj in idxs: assert jj in idxs_ii
-        for kw, (idxs_kw, vals_kw) in kwargs.items():
+        for kw, (idxs_kw, vals_kw) in list(kwargs.items()):
             for jj in idxs: assert jj in idxs_kw
 
     args_imap = []
     for idxs_j, vals_j in args:
         if len(idxs_j):
-            args_imap.append(dict(zip(idxs_j, vals_j)))
+            args_imap.append(dict(list(zip(idxs_j, vals_j))))
         else:
             args_imap.append({})
 
     kwargs_imap = {}
-    for kw, (idxs_j, vals_j) in kwargs.items():
+    for kw, (idxs_j, vals_j) in list(kwargs.items()):
         if len(idxs_j):
-            kwargs_imap[kw] = dict(zip(idxs_j, vals_j))
+            kwargs_imap[kw] = dict(list(zip(idxs_j, vals_j)))
         else:
             kwargs_imap[kw] = {}
 
@@ -83,7 +83,7 @@ def idxs_map(idxs, cmd, *args, **kwargs):
             raise
         try:
             kwargs_nn = dict([(kw, arg_imap[ii])
-                for kw, arg_imap in kwargs_imap.items()])
+                for kw, arg_imap in list(kwargs_imap.items())])
         except:
             ERR('args_nn %s' % cmd)
             ERR('ii %s' % ii)
@@ -107,7 +107,7 @@ def idxs_take(idxs, vals, which):
     # TODO: consider insisting on sorted idxs
     # TODO: use np.searchsorted instead of dct
     assert len(idxs) == len(vals)
-    table = dict(zip(idxs, vals))
+    table = dict(list(zip(idxs, vals)))
     return np.asarray([table[w] for w in which])
 
 
@@ -430,10 +430,10 @@ class VectorizeHelper(object):
 
     def idxs_by_label(self):
         return dict([(name, self.idxs_memo[node])
-                for name, node in self.params.items()])
+                for name, node in list(self.params.items())])
 
     def vals_by_label(self):
         return dict([(name, self.take_memo[node][0].pos_args[1])
-                for name, node in self.params.items()])
+                for name, node in list(self.params.items())])
 
 

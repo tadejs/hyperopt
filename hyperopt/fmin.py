@@ -1,4 +1,4 @@
-import cPickle
+import pickle
 import functools
 import logging
 import sys
@@ -6,11 +6,11 @@ import sys
 import numpy as np
 import time
 
-import pyll
-from pyll.stochastic import recursive_set_rng_kwarg
+from . import pyll
+from .pyll.stochastic import recursive_set_rng_kwarg
 
 from .vectorize import VectorizeHelper
-import base
+from . import base
 
 logger = logging.getLogger(__name__)
 
@@ -112,11 +112,11 @@ class Domain(base.Bandit):
 
         if isinstance(rval, (float, int, np.number)):
             dict_rval = {'loss': rval}
-        elif isinstance(rval, (dict,)):
+        elif isinstance(rval, dict):
             dict_rval = rval
             if 'loss' not in dict_rval:
                 raise ValueError('dictionary must have "loss" key',
-                        dict_rval.keys())
+                        list(dict_rval.keys()))
         else:
             raise TypeError('invalid return type (neither number nor dict)', rval)
 
@@ -130,7 +130,7 @@ class Domain(base.Bandit):
 
         if attach_attachments:
             attachments = dict_rval.pop('attachments', {})
-            for key, val in attachments.items():
+            for key, val in list(attachments.items()):
                 ctrl.attachments[key] = val
 
         # -- don't do this here because SON-compatibility is only a requirement
@@ -153,7 +153,7 @@ class FMinIter(object):
     def __init__(self, algo, domain, trials, async=None,
             max_queue_len=1,
             poll_interval_secs=1.0,
-            max_evals=sys.maxint,
+            max_evals=sys.maxsize,
             ):
         self.algo = algo
         self.domain = domain
@@ -169,10 +169,10 @@ class FMinIter(object):
         if self.async:
             if 'FMinIter_Domain' in trials.attachments:
                 logger.warn('over-writing old domain trials attachment')
-            msg = cPickle.dumps(
+            msg = pickle.dumps(
                     domain, protocol=self.cPickle_protocol)
             # -- sanity check for unpickling
-            cPickle.loads(msg)
+            pickle.loads(msg)
             trials.attachments['FMinIter_Domain'] = msg
 
     def serial_evaluate(self, N=-1):
@@ -182,7 +182,7 @@ class FMinIter(object):
                 ctrl = base.Ctrl(self.trials, current_trial=trial)
                 try:
                     result = self.domain.evaluate(spec, ctrl)
-                except Exception, e:
+                except Exception as e:
                     logger.info('job exception: %s' % str(e))
                     trial['state'] = base.JOB_STATE_ERROR
                     trial['misc']['error'] = (str(type(e)), str(e))
@@ -241,8 +241,8 @@ class FMinIter(object):
                 self.trials.refresh()
                 if 0:
                     for d in self.trials.trials:
-                        print 'trial %i %s %s' % (d['tid'], d['state'],
-                            d['result'].get('status'))
+                        print('trial %i %s %s' % (d['tid'], d['state'],
+                            d['result'].get('status')))
                 new_trials = algo(new_ids, self.domain, trials)
                 if new_trials is base.StopExperiment:
                     stopped = True
@@ -280,7 +280,7 @@ class FMinIter(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         self.run(1, block_until_done=self.async)
         if len(self.trials) >= self.max_evals:
             raise StopIteration()

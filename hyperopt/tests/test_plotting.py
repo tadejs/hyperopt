@@ -22,7 +22,7 @@ import hyperopt.plotting
 
 def get_do_show():
     rval = int(os.getenv('HYPEROPT_SHOW', '0'))
-    print 'do_show =', rval
+    print('do_show =', rval)
     return rval
 
 class TestPlotting(unittest.TestCase):

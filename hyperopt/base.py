@@ -41,9 +41,9 @@ import numpy as np
 import bson # -- comes with pymongo
 from bson.objectid import ObjectId
 
-import pyll
-from pyll import scope
-from pyll.stochastic import recursive_set_rng_kwarg
+from . import pyll
+from .pyll import scope
+from .pyll.stochastic import recursive_set_rng_kwarg
 
 from .exceptions import DuplicateLabel
 from .exceptions import InvalidTrial
@@ -139,21 +139,21 @@ def SONify(arg, memo=None):
             rval = type(arg)([SONify(ai, memo) for ai in arg])
         elif isinstance(arg, dict):
             rval = dict([(SONify(k, memo), SONify(v, memo))
-                for k, v in arg.items()])
-        elif isinstance(arg, (basestring, float, int, long, type(None))):
+                for k, v in list(arg.items())])
+        elif isinstance(arg, (str, float, int, type(None))):
             rval = arg
         elif isinstance(arg, np.ndarray):
             if arg.ndim == 0:
                 rval = SONify(arg.sum())
             else:
-                rval = map(SONify, arg) # N.B. memo None
+                rval = list(map(SONify, arg)) # N.B. memo None
         # -- put this after ndarray because ndarray not hashable
         elif arg in (True, False):
             rval = int(arg)
         else:
             add_arg_to_raise = False
             raise TypeError('SONify', arg)
-    except Exception, e:
+    except Exception as e:
         if add_arg_to_raise:
             e.args = e.args + (arg,)
         raise
@@ -183,15 +183,15 @@ def miscs_update_idxs_vals(miscs, idxs, vals, assert_all_vals_used=True,
     if idxs and assert_all_vals_used:
         # -- Assert that every val will be used to update some doc.
         all_ids = set()
-        for idxlist in idxs.values():
-            all_ids.update(map(imap, idxlist))
+        for idxlist in list(idxs.values()):
+            all_ids.update(list(map(imap, idxlist)))
         assert all_ids == set(misc_by_id.keys())
 
-    for tid, misc_tid in misc_by_id.items():
+    for tid, misc_tid in list(misc_by_id.items()):
         misc_tid['idxs'] = {}
         misc_tid['vals'] = {}
         for node_id in idxs:
-            node_idxs = map(imap, idxs[node_id])
+            node_idxs = list(map(imap, idxs[node_id]))
             node_vals = vals[node_id]
             if tid in node_idxs:
                 pos = node_idxs.index(tid)
@@ -210,7 +210,7 @@ def miscs_to_idxs_vals(miscs, keys=None):
     if keys is None:
         if len(miscs) == 0:
             raise ValueError('cannot infer keys from empty miscs')
-        keys = miscs[0]['idxs'].keys()
+        keys = list(miscs[0]['idxs'].keys())
     idxs = dict([(k, []) for k in keys])
     vals = dict([(k, []) for k in keys])
     for misc in miscs:
@@ -226,7 +226,7 @@ def miscs_to_idxs_vals(miscs, keys=None):
 
 def spec_from_misc(misc):
     spec = {}
-    for k, v in misc['vals'].items():
+    for k, v in list(misc['vals'].items()):
         if len(v) == 0:
             pass
         elif len(v) == 1:
@@ -299,14 +299,14 @@ class Trials(object):
         try:
             return iter(self._trials)
         except AttributeError:
-            print >> sys.stderr, "You have to refresh before you iterate"
+            print("You have to refresh before you iterate", file=sys.stderr)
             raise
 
     def __len__(self):
         try:
             return len(self._trials)
         except AttributeError:
-            print >> sys.stderr, "You have to refresh before you compute len"
+            print("You have to refresh before you compute len", file=sys.stderr)
             raise
 
     def __getitem__(self, item):
@@ -370,9 +370,9 @@ class Trials(object):
             bson.BSON.encode(trial)
         except:
             # TODO: save the trial object somewhere to inspect, fix, re-insert, etc.
-            print '-' * 80
-            print "CANT ENCODE"
-            print '-' * 80
+            print('-' * 80)
+            print("CANT ENCODE")
+            print('-' * 80)
             raise
         if trial['exp_key'] != self._exp_key:
             raise InvalidTrial('wrong exp_key',
@@ -407,7 +407,7 @@ class Trials(object):
 
     def new_trial_ids(self, N):
         aa = len(self._ids)
-        rval = range(aa, aa + N)
+        rval = list(range(aa, aa + N))
         self._ids.update(rval)
         return rval
 
@@ -491,13 +491,13 @@ class Trials(object):
         if bandit is None:
             return [r.get('loss') for r in self.results]
         else:
-            return map(bandit.loss, self.results, self.specs)
+            return list(map(bandit.loss, self.results, self.specs))
 
     def statuses(self, bandit=None):
         if bandit is None:
             return [r.get('status') for r in self.results]
         else:
-            return map(bandit.status, self.results, self.specs)
+            return list(map(bandit.status, self.results, self.specs))
 
     def average_best_error(self, bandit=None):
         """Return the average best error of the experiment
@@ -530,7 +530,7 @@ class Trials(object):
             loss = fmap(bandit.loss)
             loss_v = fmap(bandit.loss_variance)
             true_loss = fmap(bandit.true_loss)
-        loss3 = zip(loss, loss_v, true_loss)
+        loss3 = list(zip(loss, loss_v, true_loss))
         loss3.sort()
         loss3 = np.asarray(loss3)
         if np.all(loss3[:, 1] == 0):
@@ -563,7 +563,7 @@ class Trials(object):
         # unpack the one-element lists to values
         # and skip over the 0-element lists
         rval = {}
-        for k, v in vals.items():
+        for k, v in list(vals.items()):
             if v:
                 rval[k] = v[0]
         return rval
@@ -728,7 +728,7 @@ class Bandit(object):
             self.installed_rng = True
         try:
             r_dct = pyll.rec_eval(self.expr, memo=memo)
-        except Exception, e:
+        except Exception as e:
             n_match = 0
             for match, match_pair in self.exceptions:
                 if match(e):
@@ -973,7 +973,7 @@ class Experiment(object):
                 ctrl = Ctrl(self.trials, current_trial=trial)
                 try:
                     result = self.bandit.evaluate(spec, ctrl)
-                except Exception, e:
+                except Exception as e:
                     logger.info('job exception: %s' % str(e))
                     trial['state'] = JOB_STATE_ERROR
                     trial['misc']['error'] = (str(type(e)), str(e))

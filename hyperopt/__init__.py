@@ -35,15 +35,15 @@ from .fmin import partial
 from .fmin import space_eval
 
 # -- syntactic sugar
-import hp
+from . import hp
 
 # -- exceptions
-import exceptions
+from . import exceptions
 
 # -- Import built-in optimization algorithms
-import rand
-import tpe
+from . import rand
+from . import tpe
 
 # -- TODO: deprecate in favour of tpe.suggest
-from tpe import TreeParzenEstimator
+from .tpe import TreeParzenEstimator
 

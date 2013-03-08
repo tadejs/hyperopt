@@ -121,30 +121,30 @@ class TestRandom(unittest.TestCase):
         self.algo = Random(self.bandit)
 
     def test_suggest_1(self):
-        print 'EXPR', self.bandit.expr
+        print('EXPR', self.bandit.expr)
         docs = self.algo.suggest([0], Trials())
         assert len(docs) == 1
-        print 'DOCS', docs
+        print('DOCS', docs)
         # -- assert validity of docs
         trials = trials_from_docs(docs)
-        print 'TRIALS', trials
+        print('TRIALS', trials)
         assert docs[0]['misc']['idxs']['flip'] == [0]
         idxs, vals = miscs_to_idxs_vals(trials.miscs)
         assert idxs['flip'] == [0]
 
     def test_suggest_N(self, N=10):
         assert N <= 10
-        docs = self.algo.suggest(range(N), Trials())
-        print 'docs', docs
+        docs = self.algo.suggest(list(range(N)), Trials())
+        print('docs', docs)
         assert len(docs) == N
         # -- assert validity of docs
         trials = trials_from_docs(docs)
         idxs, vals = miscs_to_idxs_vals(trials.miscs)
-        print 'idxs', idxs
-        print 'vals', vals
+        print('idxs', idxs)
+        print('vals', vals)
         assert len(idxs) == 1
         assert len(vals) == 1
-        assert idxs['flip'] == range(N)
+        assert idxs['flip'] == list(range(N))
         # -- only works when N == 5
         assert np.all(vals['flip'] == [0, 1, 0, 0, 0, 0,  0, 1, 1, 0][:N])
 
@@ -158,7 +158,7 @@ class TestRandom(unittest.TestCase):
         assert len(docs) == N
         assert len(idxs) == 1
         assert len(vals) == 1
-        print vals
+        print(vals)
         assert idxs['flip'] == new_ids
 
         # -- assert that the random seed matches that of Jan 8/2013
@@ -190,9 +190,9 @@ class TestCoinFlipExperiment(unittest.TestCase):
         self.experiment.run(1)
         self.experiment.run(1)
         assert len(self.trials._trials) == 3
-        print self.trials.miscs
-        print self.trials.idxs
-        print self.trials.vals
+        print(self.trials.miscs)
+        print(self.trials.idxs)
+        print(self.trials.vals)
         assert self.trials.idxs['flip'] == [0, 1, 2]
         # -- assert that the random seed matches that of Jan 8/2013
         assert self.trials.vals['flip'] == [0, 1, 0]
@@ -225,9 +225,7 @@ class TestConfigs(unittest.TestCase):
         self.bandit = bandit = Bandit(self.expr)
         self.algo = algo = Random(bandit)
         if hasattr(self, 'n_randints'):
-            n_randints = len(filter(
-                lambda x: x.name == 'randint',
-                algo.vh.params.values()))
+            n_randints = len([x for x in list(algo.vh.params.values()) if x.name == 'randint'])
             assert n_randints == self.n_randints
 
         self.trials = Trials()
@@ -235,19 +233,19 @@ class TestConfigs(unittest.TestCase):
         self.experiment.run(5)
         self.output = output = []
         for trial in self.trials._trials:
-            print ''
+            print('')
             tmp = []
             for nid in trial['misc']['idxs']:
                 thing = (
                         nid,
                         trial['misc']['idxs'][nid],
                         trial['misc']['vals'][nid])
-                print thing
+                print(thing)
                 tmp.append(thing)
             tmp.sort()
             output.append(tmp)
-        print repr(output)
-        print repr(self.wanted)
+        print(repr(output))
+        print(repr(self.wanted))
         # -- think of a more robust way to test these things
         #    or, if the sampling style is to be nailed down,
         #    put it in and be sure of it.
@@ -414,7 +412,7 @@ class TestSONify(unittest.TestCase):
                 == [[1, 2], [3, 4.5]])
 
     def test_nested_w_bool(self):
-        thing = dict(a=1, b='2', c=True, d=False, e=np.int(3), f=[1l])
+        thing = dict(a=1, b='2', c=True, d=False, e=np.int(3), f=[1])
         assert thing == SONify(thing)
 
 

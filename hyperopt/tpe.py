@@ -11,15 +11,15 @@ import time
 
 import numpy as np
 from scipy.special import erf
-import pyll
-from pyll import scope
-from pyll.stochastic import implicit_stochastic
+from . import pyll
+from .pyll import scope
+from .pyll.stochastic import implicit_stochastic
 
 from .base import BanditAlgo
 from .base import STATUS_OK
 from .base import miscs_to_idxs_vals
 from .base import miscs_update_idxs_vals
-import rand
+from . import rand
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ def categorical_lpdf(sample, p):
 def GMM1(weights, mus, sigmas, low=None, high=None, q=None, rng=None,
         size=()):
     """Sample from truncated 1-D Gaussian Mixture Model"""
-    weights, mus, sigmas = map(np.asarray, (weights, mus, sigmas))
+    weights, mus, sigmas = list(map(np.asarray, (weights, mus, sigmas)))
     assert len(weights) == len(mus) == len(sigmas)
     n_samples = np.prod(size)
     #n_components = len(weights)
@@ -106,8 +106,8 @@ def normal_cdf(x, mu, sigma):
 @scope.define
 def GMM1_lpdf(samples, weights, mus, sigmas, low=None, high=None, q=None):
     verbose = 0
-    samples, weights, mus, sigmas = map(np.asarray,
-            (samples, weights, mus, sigmas))
+    samples, weights, mus, sigmas = list(map(np.asarray,
+            (samples, weights, mus, sigmas)))
     if samples.size == 0:
         return np.asarray([])
     if weights.ndim != 1:
@@ -121,13 +121,13 @@ def GMM1_lpdf(samples, weights, mus, sigmas, low=None, high=None, q=None):
     samples = _samples.flatten()
 
     if verbose:
-        print 'GMM1_lpdf:samples', set(samples)
-        print 'GMM1_lpdf:weights', weights
-        print 'GMM1_lpdf:mus', mus
-        print 'GMM1_lpdf:sigmas', sigmas
-        print 'GMM1_lpdf:low', low
-        print 'GMM1_lpdf:high', high
-        print 'GMM1_lpdf:q', q
+        print('GMM1_lpdf:samples', set(samples))
+        print('GMM1_lpdf:weights', weights)
+        print('GMM1_lpdf:mus', mus)
+        print('GMM1_lpdf:sigmas', sigmas)
+        print('GMM1_lpdf:low', low)
+        print('GMM1_lpdf:high', high)
+        print('GMM1_lpdf:q', q)
 
     if low is None and high is None:
         p_accept = 1
@@ -162,7 +162,7 @@ def GMM1_lpdf(samples, weights, mus, sigmas, low=None, high=None, q=None):
         rval = np.log(prob) - np.log(p_accept)
 
     if verbose:
-        print 'GMM1_lpdf:rval:', dict(zip(samples, rval))
+        print('GMM1_lpdf:rval:', dict(list(zip(samples, rval))))
 
     rval.shape = _samples.shape
     return rval
@@ -219,7 +219,7 @@ def qlognormal_lpdf(x, mu, sigma, q):
 @scope.define
 def LGMM1(weights, mus, sigmas, low=None, high=None, q=None,
         rng=None, size=()):
-    weights, mus, sigmas = map(np.asarray, (weights, mus, sigmas))
+    weights, mus, sigmas = list(map(np.asarray, (weights, mus, sigmas)))
     n_samples = np.prod(size)
     #n_components = len(weights)
     if low is None and high is None:
@@ -260,8 +260,8 @@ def logsum_rows(x):
 
 @scope.define
 def LGMM1_lpdf(samples, weights, mus, sigmas, low=None, high=None, q=None):
-    samples, weights, mus, sigmas = map(np.asarray,
-            (samples, weights, mus, sigmas))
+    samples, weights, mus, sigmas = list(map(np.asarray,
+            (samples, weights, mus, sigmas)))
     assert weights.ndim == 1
     assert mus.ndim == 1
     assert sigmas.ndim == 1
@@ -352,8 +352,8 @@ def adaptive_parzen_normal_orig(mus, prior_weight, prior_mu, prior_sigma):
         sigma[order] = sigma.copy()
 
         if not np.all(mus_orig == mus):
-            print 'orig', mus_orig
-            print 'mus', mus
+            print('orig', mus_orig)
+            print('mus', mus)
         assert np.all(mus_orig == mus)
 
         # put the prior back in
@@ -373,9 +373,9 @@ def adaptive_parzen_normal_orig(mus, prior_weight, prior_mu, prior_sigma):
     #print weights.dtype
     weights = weights / weights.sum()
     if 0:
-        print 'WEIGHTS', weights
-        print 'MUS', mus
-        print 'SIGMA', sigma
+        print('WEIGHTS', weights)
+        print('MUS', mus)
+        print('SIGMA', sigma)
 
     return weights, mus, sigma
 
@@ -470,9 +470,9 @@ def adaptive_parzen_normal(mus, prior_weight, prior_mu, prior_sigma,
     #print weights.dtype
     srtd_weights /= srtd_weights.sum()
     if 0:
-        print 'WEIGHTS', srtd_weights
-        print 'MUS', srtd_mus
-        print 'SIGMA', sigma
+        print('WEIGHTS', srtd_weights)
+        print('MUS', srtd_mus)
+        print('SIGMA', sigma)
 
     return srtd_weights, srtd_mus, sigma
 
@@ -593,8 +593,8 @@ def ap_filter_trials(o_idxs, o_vals, l_idxs, l_vals, gamma,
     """Return the elements of o_vals that correspond to trials whose losses
     were above gamma, or below gamma.
     """
-    o_idxs, o_vals, l_idxs, l_vals = map(np.asarray, [o_idxs, o_vals, l_idxs,
-        l_vals])
+    o_idxs, o_vals, l_idxs, l_vals = list(map(np.asarray, [o_idxs, o_vals, l_idxs,
+        l_vals]))
 
     # XXX if this is working, refactor this sort for efficiency
 
@@ -607,7 +607,7 @@ def ap_filter_trials(o_idxs, o_vals, l_idxs, l_vals, gamma,
     below = [v for i, v in zip(o_idxs, o_vals) if i in keep_idxs]
 
     if 0:
-        print 'DEBUG: thresh', l_vals[l_order[:n_below]]
+        print('DEBUG: thresh', l_vals[l_order[:n_below]])
 
     keep_idxs = set(l_idxs[l_order[n_below:]])
     above = [v for i, v in zip(o_idxs, o_vals) if i in keep_idxs]
@@ -685,9 +685,9 @@ def build_posterior(specs, prior_idxs, prior_vals, obs_idxs, obs_vals,
             memo[node] = new_node
     post_specs = memo[specs]
     post_idxs = dict([(nid, memo[idxs])
-        for nid, idxs in prior_idxs.items()])
+        for nid, idxs in list(prior_idxs.items())])
     post_vals = dict([(nid, memo[vals])
-        for nid, vals in prior_vals.items()])
+        for nid, vals in list(prior_vals.items())])
     assert set(post_idxs.keys()) == set(post_vals.keys())
     assert set(post_idxs.keys()) == set(prior_idxs.keys())
     return post_specs, post_idxs, post_vals
@@ -709,7 +709,7 @@ def idxs_prod(full_idxs, idxs_by_label, llik_by_label):
     assert len(set(full_idxs)) == len(full_idxs)
     full_idxs = list(full_idxs)
     rval = np.zeros(len(full_idxs))
-    pos_of_tid = dict(zip(full_idxs, range(len(full_idxs))))
+    pos_of_tid = dict(list(zip(full_idxs, list(range(len(full_idxs))))))
     assert set(idxs_by_label.keys()) == set(llik_by_label.keys())
     for nid in idxs_by_label:
         idxs = idxs_by_label[nid]
@@ -817,7 +817,7 @@ def suggest(new_ids, domain, trials,
             best_docs_loss[tid] = loss
             best_docs[tid] = doc
 
-    tid_docs = best_docs.items()
+    tid_docs = list(best_docs.items())
     # -- sort docs by order of suggestion
     #    so that linear_forgetting removes the oldest ones
     tid_docs.sort()
@@ -845,14 +845,14 @@ def suggest(new_ids, domain, trials,
         assert n_startup_jobs <= 0
         fake_id_0 = new_id + 2
 
-    fake_ids = range(fake_id_0, fake_id_0 + n_EI_candidates)
+    fake_ids = list(range(fake_id_0, fake_id_0 + n_EI_candidates))
 
     # -- this dictionary will map pyll nodes to the values
     #    they should take during the evaluation of the pyll program
     memo = {domain.s_new_ids: fake_ids}
 
     o_idxs_d, o_vals_d = miscs_to_idxs_vals(
-        [d['misc'] for d in docs], keys=domain.params.keys())
+        [d['misc'] for d in docs], keys=list(domain.params.keys()))
     memo[observed['idxs']] = o_idxs_d
     memo[observed['vals']] = o_vals_d
 
@@ -957,8 +957,8 @@ class TreeParzenEstimator(BanditAlgo):
         bandit = self.bandit
         docs_by_tid = dict([(d['tid'], d) for d in trials.trials])
         if len(docs_by_tid) != len(trials.trials):
-            import cPickle
-            cPickle.dump(trials.trials, open('assert_fail_tpe_637.pkl', 'w'))
+            import pickle
+            pickle.dump(trials.trials, open('assert_fail_tpe_637.pkl', 'w'))
             assert 0, 'non-unique docid, dumped to assert_fail_tpe_637.pkl'
         best_docs = dict()
         best_docs_loss = dict()
@@ -976,7 +976,7 @@ class TreeParzenEstimator(BanditAlgo):
                 best_docs_loss[tid] = loss
                 best_docs[tid] = doc
 
-        tid_docs = best_docs.items()
+        tid_docs = list(best_docs.items())
         # -- sort docs by order of suggestion
         #    so that linear_forgetting removes the oldest ones
         tid_docs.sort()
@@ -1006,14 +1006,14 @@ class TreeParzenEstimator(BanditAlgo):
             assert self.n_startup_jobs <= 0
             fake_id_0 = new_id + 2
 
-        fake_ids = range(fake_id_0, fake_id_0 + self.n_EI_candidates)
+        fake_ids = list(range(fake_id_0, fake_id_0 + self.n_EI_candidates))
 
         # -- this dictionary will map pyll nodes to the values
         #    they should take during the evaluation of the pyll program
         memo = {self.s_new_ids: fake_ids}
 
         o_idxs_d, o_vals_d = miscs_to_idxs_vals(
-            [d['misc'] for d in docs], keys=bandit.params.keys())
+            [d['misc'] for d in docs], keys=list(bandit.params.keys()))
         memo[self.observed['idxs']] = o_idxs_d
         memo[self.observed['vals']] = o_vals_d
 

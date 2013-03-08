@@ -38,14 +38,14 @@ if 0:
                         u_vals.pos_args.append(as_apply([
                             self.idxs_memo[opt_ii], self.vals_memo[opt_ii]]))
 
-                    print 'finalizing switch', u_vals
+                    print('finalizing switch', u_vals)
 
                 elif node.name in stoch:
                     # -- this case is separate because we're going to change
                     # the program semantics. If multiple stochastic nodes
                     # are being merged, it means just sample once, and then
                     # index multiple subsets
-                    print 'finalizing', node.name
+                    print('finalizing', node.name)
                     assert all(thing.name == node.name for thing in vals_list)
 
                     # -- assert that all the args except size to each
@@ -64,7 +64,7 @@ if 0:
                                     rng.randint(int(2**30)))))
 
                 else:
-                    print 'creating idxs map', node.name
+                    print('creating idxs map', node.name)
                     u_vals = scope.idxs_map(u_idxs, node.name)
                     u_vals.pos_args.extend(node.pos_args)
                     u_vals.named_args.extend(node.named_args)
@@ -75,8 +75,8 @@ if 0:
                                     self.vals_memo[arg]]))
 
             else:
-                print '=' * 80
-                print node
+                print('=' * 80)
+                print(node)
 
             self.idxs_memo[node] = u_idxs
             self.vals_memo[node] = u_vals

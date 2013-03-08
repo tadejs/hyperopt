@@ -10,20 +10,20 @@ import hyperopt.bandits
 class BanditExperimentMixin(object):
     def test_basic(self):
         bandit = self._bandit_cls()
-        print 'bandit params', bandit.params
+        print('bandit params', bandit.params)
         algo = Random(bandit)
-        print 'algo params', algo.vh.params
+        print('algo params', algo.vh.params)
         trials = Trials()
         experiment = Experiment(trials, algo, async=False)
         experiment.catch_bandit_exceptions = False
         experiment.max_queue_len = 50
         experiment.run(self._n_steps)
-        print
-        print self._bandit_cls
-        print bandit.loss_target
-        print trials.average_best_error(bandit)
+        print()
+        print(self._bandit_cls)
+        print(bandit.loss_target)
+        print(trials.average_best_error(bandit))
         assert trials.average_best_error(bandit) - bandit.loss_target  < .2
-        print
+        print()
 
     @classmethod
     def make(cls, bandit_cls, n_steps=500):

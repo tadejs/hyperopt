@@ -11,7 +11,7 @@ def test_fast_isin():
     D.sort()
     T1 = (X[Z] == D).all()
 
-    X = np.array(range(10000) + range(10000))
+    X = np.array(list(range(10000)) + list(range(10000)))
     Z = fast_isin(X, Y)
     T2 = (X[Z] == np.append(D, D.copy())).all()
 

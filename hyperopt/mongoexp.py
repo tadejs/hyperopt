@@ -135,7 +135,7 @@ __license__ = "3-clause BSD License"
 __contact__ = "github.com/jaberg/hyperopt"
 
 import copy
-import cPickle
+import pickle
 import datetime
 import hashlib
 import logging
@@ -147,7 +147,7 @@ import socket
 import subprocess
 import sys
 import time
-import urlparse
+import urllib.parse
 import warnings
 
 import numpy
@@ -171,7 +171,7 @@ from .base import spec_from_misc
 from .utils import fast_isin
 from .utils import get_most_recent_inds
 from .utils import json_call
-import plotting
+from . import plotting
 
 
 class OperationFailure(Exception):
@@ -238,7 +238,7 @@ def parse_url(url, pwfile=None):
     ftp_url='ftp'+url[url.find(':'):]
 
     # -- parse the string as if it were an ftp address
-    tmp = urlparse.urlparse(ftp_url)
+    tmp = urllib.parse.urlparse(ftp_url)
 
     logger.info( 'PROTOCOL %s'% protocol)
     logger.info( 'USERNAME %s'% tmp.username)
@@ -248,7 +248,7 @@ def parse_url(url, pwfile=None):
     try:
         _, dbname, collection = tmp.path.split('/')
     except:
-        print >> sys.stderr, "Failed to parse '%s'"%(str(tmp.path))
+        print("Failed to parse '%s'"%(str(tmp.path)), file=sys.stderr)
         raise
     logger.info( 'DB %s'% dbname)
     logger.info( 'COLLECTION %s'% collection)
@@ -424,14 +424,14 @@ class MongoJobs(object):
             # so now we return the dict with the _id field
             assert _id == cpy['_id']
             return cpy
-        except pymongo.errors.OperationFailure, e:
+        except pymongo.errors.OperationFailure as e:
             raise OperationFailure(e)
 
     def delete(self, job, safe=True):
         """Delete job[s]"""
         try:
             self.jobs.remove(job, safe=safe)
-        except pymongo.errors.OperationFailure, e:
+        except pymongo.errors.OperationFailure as e:
             raise OperationFailure(e)
 
     def delete_all(self, cond={}, safe=True):
@@ -446,7 +446,7 @@ class MongoJobs(object):
                         logger.error('failed to remove attachment %s:%s' % (
                             name, file_id))
                 self.jobs.remove(d, safe=safe)
-        except pymongo.errors.OperationFailure, e:
+        except pymongo.errors.OperationFailure as e:
             raise OperationFailure(e)
 
     def delete_all_error_jobs(self, safe=True):
@@ -483,7 +483,7 @@ class MongoJobs(object):
                 new=True,
                 safe=True,
                 upsert=False)
-        except pymongo.errors.OperationFailure, e:
+        except pymongo.errors.OperationFailure as e:
             logger.error('Error during reserve_job: %s'%str(e))
             rval = None
         return rval
@@ -531,7 +531,7 @@ class MongoJobs(object):
                     safe=True,
                     upsert=False,
                     multi=False,)
-        except pymongo.errors.OperationFailure, e:
+        except pymongo.errors.OperationFailure as e:
             # translate pymongo failure into generic failure
             raise OperationFailure(e)
 
@@ -549,13 +549,13 @@ class MongoJobs(object):
                     # str('a') != unicode('a').
                     # TODO: eliminate false alarms and catch real ones
                     mismatching_keys = []
-                    for k, v in server_doc.items():
+                    for k, v in list(server_doc.items()):
                         if k in doc:
                             if doc[k] != v:
                                 mismatching_keys.append((k, v, doc[k]))
                         else:
                             mismatching_keys.append((k, v, '<missing>'))
-                    for k,v in doc.items():
+                    for k,v in list(doc.items()):
                         if k not in server_doc:
                             mismatching_keys.append((k, '<missing>', v))
 
@@ -565,9 +565,9 @@ class MongoJobs(object):
 
     def attachment_names(self, doc):
         def as_str(name_id):
-            assert isinstance(name_id[0], basestring), name_id
+            assert isinstance(name_id[0], str), name_id
             return str(name_id[0])
-        return map(as_str, doc.get('_attachments', []))
+        return list(map(as_str, doc.get('_attachments', [])))
 
     def set_attachment(self, doc, blob, name, collection=None):
         """Attach potentially large data string `blob` to `doc` by name `name`
@@ -755,7 +755,7 @@ class MongoTrials(Trials):
                                       str(numpy.random.randint(1e8)) + '.pkl')
                     logger.error('HYPEROPT REFRESH ERROR: writing error file to %s' % reportpath)
                     _file = open(reportpath, 'w')
-                    cPickle.dump({'db_data': db_data, 
+                    pickle.dump({'db_data': db_data, 
                                   'existing_data': existing_data},
                                 _file)
                     _file.close()
@@ -877,7 +877,7 @@ class MongoTrials(Trials):
                 logger.warning('no last_id found, re-trying')
                 time.sleep(1.0)
         lid = doc.get('last_id', 0)
-        return range(lid, lid + N)
+        return list(range(lid, lid + N))
 
     def trial_attachments(self, trial):
         """
@@ -1073,9 +1073,9 @@ class MongoWorker(object):
             cmd_protocol = cmd[0]
             try:
                 if cmd_protocol == 'cpickled fn':
-                    worker_fn = cPickle.loads(cmd[1])
+                    worker_fn = pickle.loads(cmd[1])
                 elif cmd_protocol == 'call evaluate':
-                    bandit = cPickle.loads(cmd[1])
+                    bandit = pickle.loads(cmd[1])
                     worker_fn = bandit.evaluate
                 elif cmd_protocol == 'token_load':
                     cmd_toks = cmd[1].split('.')
@@ -1087,20 +1087,20 @@ class MongoWorker(object):
                 elif cmd_protocol == 'driver_attachment':
                     #name = 'driver_attachment_%s' % job['exp_key']
                     blob = ctrl.trials.attachments[cmd[1]]
-                    bandit_name, bandit_args, bandit_kwargs = cPickle.loads(blob)
+                    bandit_name, bandit_args, bandit_kwargs = pickle.loads(blob)
                     worker_fn = json_call(bandit_name,
                             args=bandit_args,
                             kwargs=bandit_kwargs).evaluate
                 elif cmd_protocol == 'domain_attachment':
                     blob = ctrl.trials.attachments[cmd[1]]
-                    domain = cPickle.loads(blob)
+                    domain = pickle.loads(blob)
                     worker_fn = domain.evaluate
                 else:
                     raise ValueError('Unrecognized cmd protocol', cmd_protocol)
 
                 result = worker_fn(spec, ctrl)
                 result = SONify(result)
-            except BaseException, e:
+            except BaseException as e:
                 #XXX: save exception to database, but if this fails, then
                 #      at least raise the original traceback properly
                 logger.info('job exception: %s' % str(e))
@@ -1117,7 +1117,7 @@ class MongoWorker(object):
 
         logger.info('job finished: %s' % str(job['_id']))
         attachments = result.pop('attachments', {})
-        for aname, aval in attachments.items():
+        for aname, aval in list(attachments.items()):
             logger.info(
                 'mongoexp: saving attachment name=%s (%i bytes)' % (
                     aname, len(aval)))
@@ -1305,7 +1305,7 @@ def main_worker():
             help="check work queue every 1 < T < N seconds (default: 5")
     parser.add_option("--max-jobs",
             dest='max_jobs',
-            default=sys.maxint,
+            default=sys.maxsize,
             help="stop after running this many jobs (default: inf)")
     parser.add_option("--mongo",
             dest='mongo',
@@ -1338,7 +1338,7 @@ def bandit_from_options(options):
     bandit_name = options.bandit
     if options.bandit_argfile:
         bandit_argfile_text = open(options.bandit_argfile).read()
-        bandit_argv, bandit_kwargs = cPickle.loads(bandit_argfile_text)
+        bandit_argv, bandit_kwargs = pickle.loads(bandit_argfile_text)
     else:
         bandit_argfile_text = ''
         bandit_argv, bandit_kwargs = (), {}
@@ -1416,15 +1416,15 @@ def main_search_helper(options, args, input=input, cmd_type=None):
     trials = MongoTrials(as_mongo_str(options.mongo) + '/jobs', exp_key)
 
     if options.clear_existing:
-        print >> sys.stdout, "Are you sure you want to delete",
-        print >> sys.stdout, ("all %i jobs with exp_key: '%s' ?"
+        print("Are you sure you want to delete", end=' ', file=sys.stdout)
+        print(("all %i jobs with exp_key: '%s' ?"
                 % (
                     trials.handle.db.jobs.find({'exp_key':exp_key}).count(),
-                    str(exp_key)))
-        print >> sys.stdout, '(y/n)'
+                    str(exp_key))), file=sys.stdout)
+        print('(y/n)', file=sys.stdout)
         y, n = 'y', 'n'
-        if input() != 'y':
-            print >> sys.stdout, "aborting"
+        if eval(input()) != 'y':
+            print("aborting", file=sys.stdout)
             return 1
         trials.delete_all()
 
@@ -1434,11 +1434,11 @@ def main_search_helper(options, args, input=input, cmd_type=None):
     if bandit_argfile_text or algo_argfile_text or cmd_type=='D.A.':
         aname = 'driver_attachment_%s.pkl' % exp_key
         if aname in trials.attachments:
-            atup = cPickle.loads(trials.attachments[aname])
+            atup = pickle.loads(trials.attachments[aname])
             if bandit_NAK != atup:
                 raise BanditSwapError((bandit_NAK, atup))
         else:
-            blob = cPickle.dumps(bandit_NAK)
+            blob = pickle.dumps(bandit_NAK)
             trials.attachments[aname] = blob
         worker_cmd = ('driver_attachment', aname)
     else:
@@ -1490,7 +1490,7 @@ def main_search():
             help="save driver state to mongo on exit")
     parser.add_option("--steps",
             dest='steps',
-            default=sys.maxint,
+            default=sys.maxsize,
             help="exit after queuing this many jobs (default: inf)")
     parser.add_option("--workdir",
             dest="workdir",
@@ -1535,7 +1535,7 @@ def main_search():
 
 def main_show_helper(options, args):
     if options.trials_pkl:
-        trials = cPickle.load(open(options.trials_pkl))
+        trials = pickle.load(open(options.trials_pkl))
     else:
         bandit_stuff = bandit_from_options(options)
         bandit, (bandit_name, bandit_args, bandit_kwargs), bandit_algo_argfile\
@@ -1554,24 +1554,24 @@ def main_show_helper(options, args):
         if 0:
             import matplotlib.pyplot as plt
             self.refresh_trials_results()
-            yvals, colors = zip(*[(1 - r.get('best_epoch_test', .5), 'g')
-                for y, r in zip(self.losses(), self.results) if y is not None])
-            plt.scatter(range(len(yvals)), yvals, c=colors)
+            yvals, colors = list(zip(*[(1 - r.get('best_epoch_test', .5), 'g')
+                for y, r in zip(self.losses(), self.results) if y is not None]))
+            plt.scatter(list(range(len(yvals))), yvals, c=colors)
         return plotting.main_plot_history(trials)
     elif 'histogram' == cmd:
         return plotting.main_plot_histogram(trials)
     elif 'dump' == cmd:
         raise NotImplementedError('TODO: dump jobs db to stdout as JSON')
     elif 'dump_pickle' == cmd:
-        cPickle.dump(trials_from_docs(trials.trials),
+        pickle.dump(trials_from_docs(trials.trials),
                 open(args[1], 'w'))
     elif 'vars' == cmd:
         return plotting.main_plot_vars(trials, bandit=bandit)
     else:
         logger.error("Invalid cmd %s" % cmd)
         parser.print_help()
-        print """Current supported commands are history, histogram, vars
-        """
+        print("""Current supported commands are history, histogram, vars
+        """)
         return -1
 
 

@@ -1,16 +1,16 @@
 if 0:
     # This code prints out the offending object when pickling fails
-    import copy_reg
-    orig_reduce_ex = copy_reg._reduce_ex
+    import copyreg
+    orig_reduce_ex = copyreg._reduce_ex
     def my_reduce_ex(self, proto):
         try:
             return orig_reduce_ex(self, proto)
         except:
-            print 'PICKLING FAILED', self
+            print('PICKLING FAILED', self)
             raise
-    copy_reg._reduce_ex = my_reduce_ex
+    copyreg._reduce_ex = my_reduce_ex
 
-import cPickle
+import pickle
 import functools
 import os
 import signal
@@ -78,7 +78,7 @@ class TempMongo(object):
                 interval = .125
                 while interval <= 2:
                     if interval > .125:
-                        print "Waiting for mongo to come up"
+                        print("Waiting for mongo to come up")
                     time.sleep(interval)
                     interval *= 2
                     if  self.db_up():
@@ -91,10 +91,10 @@ class TempMongo(object):
                     except OSError:
                         pass # if it crashed there is no such process
                     out, err = self.mongo_proc.communicate()
-                    print >> sys.stderr, out
-                    print >> sys.stderr, err
+                    print(out, file=sys.stderr)
+                    print(err, file=sys.stderr)
                     raise RuntimeError('No database connection', proc_args)
-            except Exception, e:
+            except Exception as e:
                 try:
                     os.kill(self.mongo_proc.pid, signal.SIGTERM)
                 except OSError:
@@ -129,12 +129,12 @@ class TempMongo(object):
 try:
     with TempMongo() as temp_mongo:
         pass
-except OSError, e:
-    print >> sys.stderr, e
-    print >> sys.stderr, ("Failed to create a TempMongo context,"
-        " skipping all mongo tests.")
+except OSError as e:
+    print(e, file=sys.stderr)
+    print(("Failed to create a TempMongo context,"
+        " skipping all mongo tests."), file=sys.stderr)
     if "such file" in str(e):
-        print >> sys.stderr, "Hint: is mongod executable on path?"
+        print("Hint: is mongod executable on path?", file=sys.stderr)
     raise nose.SkipTest()
 
 
@@ -155,7 +155,7 @@ def with_mongo_trials(f, exp_key=None):
         with TempMongo() as temp_mongo:
             trials = MongoTrials(temp_mongo.connection_string('foo'),
                     exp_key=exp_key)
-            print(len(trials.results))
+            print((len(trials.results)))
             f(trials)
     wrapper.__name__ = f.__name__
     return wrapper
@@ -168,15 +168,15 @@ def _worker_thread_fn(host_id, n_jobs, timeout, dbname='foo', logfilename=None):
     try:
         while n_jobs:
             mw.run_one(host_id, timeout, erase_created_workdir=True)
-            print 'worker: %s ran job' % str(host_id)
+            print('worker: %s ran job' % str(host_id))
             n_jobs -= 1
     except ReserveTimeout:
-        print 'worker timed out:', host_id
+        print('worker timed out:', host_id)
         pass
 
 
 def with_worker_threads(n_threads, dbname='foo',
-        n_jobs=sys.maxint, timeout=10.0):
+        n_jobs=sys.maxsize, timeout=10.0):
     """
     Decorator that will run a test with some MongoWorker threads in flight
     """
@@ -187,7 +187,7 @@ def with_worker_threads(n_threads, dbname='foo',
     def deco(f):
         def wrapper(*args, **kwargs):
             # --start some threads
-            threads = map(newth, range(n_threads))
+            threads = list(map(newth, list(range(n_threads))))
             [th.start() for th in threads]
             try:
                 return f(*args, **kwargs)
@@ -225,14 +225,14 @@ def test_attachments(trials):
     assert 'aname' not in trials.attachments
     trials.attachments['aname'] = blob
     assert 'aname' in trials.attachments
-    assert trials.attachments[u'aname'] == blob
+    assert trials.attachments['aname'] == blob
     assert trials.attachments['aname'] == blob
 
     blob2 = 'zzz'
     trials.attachments['aname'] = blob2
     assert 'aname' in trials.attachments
     assert trials.attachments['aname'] == blob2
-    assert trials.attachments[u'aname'] == blob2
+    assert trials.attachments['aname'] == blob2
 
     del trials.attachments['aname']
     assert 'aname' not in trials.attachments
@@ -274,7 +274,7 @@ class TestExperimentWithThreads(unittest.TestCase):
             logfilename=None)
         while n_jobs:
             mw.run_one(host_id, timeout, erase_created_workdir=True)
-            print 'worker: %s ran job' % str(host_id)
+            print('worker: %s ran job' % str(host_id))
             n_jobs -= 1
 
     def work(self):
@@ -294,14 +294,14 @@ class TestExperimentWithThreads(unittest.TestCase):
                 return threading.Thread(
                         target=self.worker_thread_fn,
                         args=(('hostname', ii), n_jobs, 30.0))
-            threads = map(newth, range(n_threads))
+            threads = list(map(newth, list(range(n_threads))))
             [th.start() for th in threads]
 
             exp_list = []
             trials_list = []
             try:
                 for key in self.exp_keys:
-                    print 'running experiment'
+                    print('running experiment')
                     trials = MongoTrials(tm.connection_string('foodb'), key)
                     assert len(trials) == 0
                     if hasattr(self, 'prep_trials'):
@@ -310,9 +310,9 @@ class TestExperimentWithThreads(unittest.TestCase):
                     if self.use_stop:
                         bandit_algo = RandomStop(n_threads * jobs_per_thread,
                                                     self.bandit, cmd=self.cmd)
-                        print bandit_algo
+                        print(bandit_algo)
                         exp = Experiment(trials, bandit_algo, max_queue_len=1)
-                        exp.run(sys.maxint, block_until_done=False)
+                        exp.run(sys.maxsize, block_until_done=False)
                     else:
                         bandit_algo = Random(self.bandit, cmd=self.cmd)
                         exp = Experiment(trials, bandit_algo,
@@ -322,7 +322,7 @@ class TestExperimentWithThreads(unittest.TestCase):
                     exp_list.append(exp)
                     trials_list.append(trials)
             finally:
-                print 'joining worker thread...'
+                print('joining worker thread...')
                 [th.join() for th in threads]
 
             for exp in exp_list:
@@ -375,12 +375,12 @@ class TestExperimentWithThreads(unittest.TestCase):
         bandit_name = 'hyperopt.bandits.gauss_wave2'
         bandit_args = ()
         bandit_kwargs = {}
-        blob = cPickle.dumps((bandit_name, bandit_args, bandit_kwargs))
+        blob = pickle.dumps((bandit_name, bandit_args, bandit_kwargs))
         def prep_trials(trials):
-            print 'storing attachment'
+            print('storing attachment')
             trials.attachments['aname'] = blob
             assert trials.attachments['aname'] == blob
-            assert trials.attachments[u'aname'] == blob
+            assert trials.attachments['aname'] == blob
         self.prep_trials = prep_trials
         self.cmd = ('driver_attachment', 'aname')
         self.exp_keys = ['key0']
@@ -441,7 +441,7 @@ def test_main_search_clear_existing(trials):
     doc = hyperopt.tests.test_base.ok_trial(70, 0)
     doc['exp_key'] = 'hello'
     trials.insert_trial_doc(doc)
-    print 'Setting up trials with exp_key', doc['exp_key']
+    print('Setting up trials with exp_key', doc['exp_key'])
     options = FakeOptions(
             bandit_argfile='',
             bandit_algo_argfile='',
@@ -482,7 +482,7 @@ def test_main_search_driver_attachment(trials):
             )
     args = ('hyperopt.bandits.n_arms', 'hyperopt.Random')
     main_search_helper(options, args, cmd_type='D.A.')
-    print trials.handle.gfs._GridFS__collection
+    print(trials.handle.gfs._GridFS__collection)
     assert 'driver_attachment_hello.pkl' in trials.attachments
 
 
@@ -490,7 +490,7 @@ def test_main_search_driver_attachment(trials):
 @functools.partial(with_mongo_trials, exp_key='hello')
 def test_main_search_driver_reattachment(trials):
     # pretend we already attached a different bandit
-    trials.attachments['driver_attachment_hello.pkl'] = cPickle.dumps(
+    trials.attachments['driver_attachment_hello.pkl'] = pickle.dumps(
             (1, 2, 3))
     options = FakeOptions(
             bandit_argfile='',

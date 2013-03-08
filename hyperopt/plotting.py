@@ -7,14 +7,14 @@ __authors__   = "James Bergstra"
 __license__   = "3-clause BSD License"
 __contact__   = "James Bergstra <pylearn-dev@googlegroups.com>"
 
-import cPickle
+import pickle
 import math
 import sys
 
 # -- don't import this here because it locks in the backend
 #    and we want the unittests to be able to set the backend
 ##import matplotlib.pyplot as plt
-import pyll
+from . import pyll
 
 import numpy as np
 from .base import Bandit
@@ -22,7 +22,7 @@ from .base import BanditAlgo
 from .base import miscs_to_idxs_vals
 
 def algo_as_str(algo):
-    if isinstance(algo, basestring):
+    if isinstance(algo, str):
         return algo
     return str(algo)
 
@@ -38,10 +38,10 @@ def main_plot_history(trials, bandit=None, algo=None, do_show=True,
     Xs = trials.specs
 
     # XXX: show the un-finished or error trials
-    Ys, colors = zip(*[(y, status_colors[s])
+    Ys, colors = list(zip(*[(y, status_colors[s])
         for y, s in zip(trials.losses(bandit), trials.statuses(bandit))
-        if y is not None])
-    plt.scatter(range(len(Ys)), Ys, c=colors)
+        if y is not None]))
+    plt.scatter(list(range(len(Ys))), Ys, c=colors)
     plt.xlabel('time')
     plt.ylabel('loss')
 
@@ -56,7 +56,7 @@ def main_plot_history(trials, bandit=None, algo=None, do_show=True,
                 ymean + 0.53 * yrange,
                 )
     best_err = trials.average_best_error(bandit)
-    print "avg best error:", best_err
+    print("avg best error:", best_err)
     plt.axhline(best_err, c='g')
 
     plt.title('bandit: %s algo: %s' % (
@@ -71,14 +71,14 @@ def main_plot_histogram(trials, bandit=None, algo=None, do_show=True):
     import matplotlib.pyplot as plt
 
     status_colors = {'new':'k', 'running':'g', 'ok':'b', 'fail':'r'}
-    Xs, Ys, Ss, Cs= zip(*[(x, y, s, status_colors[s])
+    Xs, Ys, Ss, Cs= list(zip(*[(x, y, s, status_colors[s])
         for (x, y, s) in zip(trials.specs, trials.losses(bandit),
             trials.statuses(bandit))
-        if y is not None ])
+        if y is not None ]))
 
 
     # XXX: deal with ok vs. un-finished vs. error trials
-    print 'Showing Histogram of %i jobs' % len(Ys)
+    print('Showing Histogram of %i jobs' % len(Ys))
     plt.hist(Ys)
     plt.xlabel('loss')
     plt.ylabel('frequency')
@@ -111,9 +111,9 @@ def main_plot_vars(trials, bandit=None, do_show=True, fontsize=10,
 
     loss_min = min(finite_losses)
     loss_max = max(finite_losses)
-    print 'finite loss range', loss_min, loss_max, colorize_thresh
+    print('finite loss range', loss_min, loss_max, colorize_thresh)
 
-    loss_by_tid = dict(zip(trials.tids, losses))
+    loss_by_tid = dict(list(zip(trials.tids, losses)))
 
     def color_fn(lossval):
         if lossval is None:
@@ -155,7 +155,7 @@ def main_plot_vars(trials, bandit=None, do_show=True, fontsize=10,
 
         # hide x ticks
         ticks_num, ticks_txt = plt.xticks()
-        plt.xticks(ticks_num, ['' for i in xrange(len(ticks_num))])
+        plt.xticks(ticks_num, ['' for i in range(len(ticks_num))])
 
         dist_name = bandit.params[label].name
         x = idxs[label]
@@ -164,7 +164,7 @@ def main_plot_vars(trials, bandit=None, do_show=True, fontsize=10,
         else:
             y = vals[label]
         plt.title(titles[varnum], fontsize=fontsize)
-        c = map(color_fn_bw, [loss_by_tid[ii] for ii in idxs[label]])
+        c = list(map(color_fn_bw, [loss_by_tid[ii] for ii in idxs[label]]))
         if len(y):
             plt.scatter(x, y, c=c)
         if 'log' in dist_name:
@@ -324,14 +324,14 @@ if 0:
 
             if n_batches_of_K < 10:
                 # use scatter plot
-                for i in xrange(n_batches_of_K):
+                for i in range(n_batches_of_K):
                     scatter_x.append(log_K+1)
                     scatter_y.append(best_score(i))
                     scatter_c.append((0,0,0))
                 box_x.append([])
             else:
                 # use box plot
-                box_x.append([best_score(i) for i in xrange(n_batches_of_K)])
+                box_x.append([best_score(i) for i in range(n_batches_of_K)])
             K *= 2
             log_K += 1
         plt.scatter( scatter_x, scatter_y, c=scatter_c, marker='+', linewidths=0.2,
@@ -371,16 +371,16 @@ if 0:
 
         # set ticks
         ticks_num, ticks_txt = plt.xticks()
-        plt.xticks(ticks_num, ['%i'%(2**i) for i in xrange(len(ticks_num))])
+        plt.xticks(ticks_num, ['%i'%(2**i) for i in range(len(ticks_num))])
 
 
     def rexp_pairs_raw(x, y, vscores):
         if len(x) != len(y): raise ValueError()
         if len(x) != len(vscores): raise ValueError()
 
-        vxy = zip(vscores, x, y)
+        vxy = list(zip(vscores, x, y))
         vxy.sort()
-        vscores, x, y = zip(*vxy)
+        vscores, x, y = list(zip(*vxy))
 
         vscores = np.asarray(vscores)
 
@@ -428,7 +428,7 @@ if 0:
         def __init__(self):
             self.histories = []
 
-        def add_experiment(self, mj, y_fn, start=0, stop=sys.maxint,
+        def add_experiment(self, mj, y_fn, start=0, stop=sys.maxsize,
                 color=None,
                 label=None):
             trials = [(job['book_time'], job, y_fn(job))
@@ -443,11 +443,11 @@ if 0:
                     [t[2] for t in trials],
                     color, label))
             else:
-                print 'NO TRIALS'
+                print('NO TRIALS')
 
         def add_scatters(self):
             for t, y, c, l in self.histories:
-                print 'setting label', l
+                print('setting label', l)
                 plt.scatter(
                         np.arange(len(y)),
                         y,
@@ -465,12 +465,12 @@ if 0:
             plt.show()
 
     def main_plot_histories(cls):
-        import plotting
+        from . import plotting
         conn_str_template = sys.argv[2]
         algos = sys.argv[3].split(',')
         dataset_name = sys.argv[4]
         start = int(sys.argv[5]) if len(sys.argv)>5 else 0
-        stop = int(sys.argv[6]) if len(sys.argv)>6 else sys.maxint
+        stop = int(sys.argv[6]) if len(sys.argv)>6 else sys.maxsize
         mh = plotting.MultiHistory()
         colors = ['r', 'y', 'b', 'g', 'c', 'k']
 
@@ -487,7 +487,7 @@ if 0:
 
         for c, algo in zip(colors, algos):
             conn_str = conn_str_template % (algo, dataset_name)
-            print 'algo', algo
+            print('algo', algo)
             mh.add_experiment(
                     mj=MongoJobs.new_from_connection_str(conn_str),
                     y_fn=custom_err_fn,
@@ -548,12 +548,12 @@ if 0:
             plt.show()
         def main_show_all(self, columns=None):
             if columns == None:
-                columns = range(len(self.a_vars))
+                columns = list(range(len(self.a_vars)))
 
             columns = [c for c in columns if c < len(self.a_vars)]
 
             n_vars = np.sum(self.a_vars[c] for c in columns)
-            print n_vars
+            print(n_vars)
             n_rows = 1
             n_cols = 10000
             n_vars -= 1
@@ -563,7 +563,7 @@ if 0:
                 while n_vars % n_rows:
                     n_rows -= 1
                 n_cols = n_vars / n_rows
-            print n_rows, n_cols
+            print(n_rows, n_cols)
 
             subplot_idx = 0
             for var_idx in columns:
@@ -582,5 +582,5 @@ if 0:
                 self.trials,
                 status = self.statuses(),
                 y = self.losses())
-        return scatter_by_conf.main_show_all(range(low_col, high_col))
+        return scatter_by_conf.main_show_all(list(range(low_col, high_col)))
 

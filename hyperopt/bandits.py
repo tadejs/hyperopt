@@ -6,13 +6,13 @@ XXX: get some standard optimization problems from literature
 """
 import numpy as np
 
-import base
-from pyll import as_apply
-from pyll import scope
+from . import base
+from .pyll import as_apply
+from .pyll import scope
 
-from pyll_utils import hp_choice
-from pyll_utils import hp_uniform, hp_loguniform, hp_quniform, hp_qloguniform
-from pyll_utils import hp_normal, hp_lognormal, hp_qnormal, hp_qlognormal
+from .pyll_utils import hp_choice
+from .pyll_utils import hp_uniform, hp_loguniform, hp_quniform, hp_qloguniform
+from .pyll_utils import hp_normal, hp_lognormal, hp_qnormal, hp_qlognormal
 
 
 @base.as_bandit(loss_target=0)
